@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>PokBot</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:#2b2b2b; color:#ccc; font-family:Arial,sans-serif; font-size:13px; height:100vh; display:flex; flex-direction:column; user-select:none; }
+    #titlebar { background:#1a1a1a; height:30px; display:flex; align-items:center; padding:0 10px; -webkit-app-region:drag; flex-shrink:0; }
+    #titlebar span { color:#e63946; font-weight:bold; font-size:13px; letter-spacing:2px; }
+    .wbtns { margin-left:auto; display:flex; gap:6px; -webkit-app-region:no-drag; }
+    .wbtn { width:12px; height:12px; border-radius:50%; border:none; cursor:pointer; }
+    .wbtn.min{background:#febc2e;} .wbtn.close{background:#ff5f57;}
+    #menubar { background:#252525; padding:2px 8px; display:flex; gap:2px; border-bottom:1px solid #111; flex-shrink:0; }
+    .menu-item { padding:3px 10px; cursor:pointer; border-radius:3px; }
+    .menu-item:hover { background:#3a3a3a; }
+    #tabs { background:#1e1e1e; display:flex; gap:2px; padding:4px 8px 0; border-bottom:1px solid #111; flex-shrink:0; }
+    .tab { padding:5px 14px; cursor:pointer; border-radius:4px 4px 0 0; background:#2b2b2b; border:1px solid #111; border-bottom:none; }
+    .tab.active { background:#333; color:#fff; }
+    .tab:hover:not(.active) { background:#2f2f2f; }
+    #main { display:flex; flex:1; overflow:hidden; }
+    #sidebar { width:200px; background:#1e1e1e; border-right:1px solid #111; display:flex; flex-direction:column; flex-shrink:0; }
+    #sidebar-header { padding:6px 10px; background:#252525; font-size:12px; color:#e63946; font-weight:bold; }
+    #script-list { flex:1; overflow-y:auto; }
+    .script-item { padding:7px 12px; cursor:pointer; border-bottom:1px solid #252525; display:flex; align-items:center; gap:6px; }
+    .script-item:hover { background:#2a2a2a; }
+    .script-item.active { background:#333; color:#fff; }
+    .dot { width:7px; height:7px; border-radius:50%; background:#555; flex-shrink:0; }
+    .script-item.active .dot { background:#e63946; }
+    #sidebar-btns { padding:8px; display:flex; flex-direction:column; gap:4px; }
+    #editor-area { flex:1; display:flex; flex-direction:column; }
+    #editor-toolbar { background:#252525; padding:4px 10px; display:flex; gap:6px; align-items:center; border-bottom:1px solid #111; }
+    #current-file { color:#e63946; font-size:12px; font-weight:bold; margin-right:auto; }
+    #editor { flex:1; background:#1a1a1a; color:#d4d4d4; padding:12px; font-family:'Courier New',monospace; font-size:13px; resize:none; border:none; outline:none; }
+    #rightpanel { width:160px; background:#252525; border-left:1px solid #111; padding:8px; display:flex; flex-direction:column; gap:6px; flex-shrink:0; }
+    #rightpanel h3 { color:#aaa; font-size:11px; text-align:center; margin-bottom:2px; }
+    .section-title { color:#777; font-size:10px; margin-top:4px; }
+    .btn { padding:5px 8px; border:none; border-radius:3px; cursor:pointer; font-size:12px; width:100%; text-align:center; }
+    .btn-green{background:#27ae60;color:#fff;} .btn-green:hover{background:#219a52;}
+    .btn-red{background:#c0392b;color:#fff;} .btn-red:hover{background:#a93226;}
+    .btn-blue{background:#2980b9;color:#fff;} .btn-blue:hover{background:#2471a3;}
+    .btn-gray{background:#3a3a3a;color:#ccc;} .btn-gray:hover{background:#444;}
+    .btn-pink{background:#e63946;color:#fff;} .btn-pink:hover{background:#c1121f;}
+    #statusbar { background:#1a1a1a; padding:3px 10px; font-size:11px; color:#555; border-top:1px solid #111; flex-shrink:0; display:flex; justify-content:space-between; }
+    .tab-content { display:none; flex:1; padding:16px; overflow-y:auto; }
+    .tab-content.active { display:flex; flex-direction:column; gap:10px; }
+    .info-box { background:#1e1e1e; border:1px solid #333; border-radius:4px; padding:12px; }
+    .info-box h4 { color:#e63946; margin-bottom:6px; }
+    .info-row { display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px solid #2a2a2a; }
+    .info-row:last-child { border-bottom:none; }
+    ::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-track{background:#1a1a1a;} ::-webkit-scrollbar-thumb{background:#444;border-radius:3px;}
+  </style>
+</head>
+<body>
+<div id="titlebar">
+  <span>&#9889; PokBot</span>
+  <div class="wbtns">
+    <button class="wbtn min" onclick="api.minimize()"></button>
+    <button class="wbtn close" onclick="api.close()"></button>
+  </div>
+</div>
+<div id="menubar">
+  <div class="menu-item">Arquivo</div>
+  <div class="menu-item">Opcoes</div>
+  <div class="menu-item">Ajuda</div>
+  <div class="menu-item">Misc</div>
+</div>
+<div id="tabs">
+  <div class="tab active" onclick="switchTab('scripts')">Scripts</div>
+  <div class="tab" onclick="switchTab('cavebot')">Cavebot</div>
+  <div class="tab" onclick="switchTab('healer')">Healer</div>
+  <div class="tab" onclick="switchTab('targeting')">Targeting</div>
+  <div class="tab" onclick="switchTab('alerts')">Alertas</div>
+  <div class="tab" onclick="switchTab('info')">Info & Opcoes</div>
+</div>
+<div id="main">
+
+  <!-- SCRIPTS -->
+  <div id="tab-scripts" class="tab-content active" style="display:flex;flex-direction:row;padding:0;gap:0;flex:1;">
+    <div id="sidebar">
+      <div id="sidebar-header">Scripts Lua</div>
+      <div id="script-list"></div>
+      <div id="sidebar-btns">
+        <button class="btn btn-gray" onclick="importScript()">Importar</button>
+        <button class="btn btn-gray" onclick="newScript()">+ Novo</button>
+      </div>
+    </div>
+    <div id="editor-area">
+      <div id="editor-toolbar">
+        <span id="current-file">nenhum arquivo aberto</span>
+        <button class="btn btn-gray" onclick="saveScript()" style="width:auto;padding:4px 12px;">Salvar</button>
+        <button class="btn btn-red" onclick="deleteScript()" style="width:auto;padding:4px 12px;">Deletar</button>
+        <button class="btn btn-green" onclick="sendToPKM()" style="width:auto;padding:4px 12px;">Enviar PKM</button>
+      </div>
+      <textarea id="editor" placeholder="-- Selecione ou crie um script Lua..."></textarea>
+    </div>
+    <div id="rightpanel">
+      <h3>Acoes</h3>
+      <button class="btn btn-pink" onclick="sendToPKM()">Enviar PKM</button>
+      <button class="btn btn-green" onclick="saveScript()">Salvar</button>
+      <button class="btn btn-blue" onclick="importScript()">Importar</button>
+      <button class="btn btn-gray" onclick="newScript()">+ Novo</button>
+      <button class="btn btn-red" onclick="deleteScript()">Deletar</button>
+      <div class="section-title">PKM LAUNCHER</div>
+      <div style="font-size:10px;color:#555;word-break:break-all;">Desktop\PKM LAUNCHER</div>
+    </div>
+  </div>
+
+  <!-- CAVEBOT -->
+  <div id="tab-cavebot" class="tab-content" style="flex:1;">
+    <div class="info-box">
+      <h4>Cavebot</h4>
+      <p style="color:#666;font-size:12px;">Em breve — waypoints e acoes automaticas.</p>
+    </div>
+  </div>
+
+  <!-- HEALER -->
+  <div id="tab-healer" class="tab-content" style="flex:1;">
+    <div class="info-box">
+      <h4>Healer</h4>
+      <p style="color:#666;font-size:12px;">Em breve — cura automatica por HP/MP.</p>
+    </div>
+  </div>
+
+  <!-- TARGETING -->
+  <div id="tab-targeting" class="tab-content" style="flex:1;">
+    <div class="info-box">
+      <h4>Targeting</h4>
+      <p style="color:#666;font-size:12px;">Em breve — lista de criaturas e configuracoes de ataque.</p>
+    </div>
+  </div>
+
+  <!-- ALERTAS -->
+  <div id="tab-alerts" class="tab-content" style="flex:1;">
+    <div class="info-box">
+      <h4>Alertas</h4>
+      <p style="color:#666;font-size:12px;">Em breve — alertas de jogador, monstro, mensagem privada, etc.</p>
+    </div>
+  </div>
+
+  <!-- INFO -->
+  <div id="tab-info" class="tab-content" style="flex:1;">
+    <div class="info-box">
+      <h4>Info & Opcoes</h4>
+      <div class="info-row"><span>Versao</span><span style="color:#e63946;">1.0.0</span></div>
+      <div class="info-row"><span>Node.js</span><span style="color:#27ae60;">OK</span></div>
+      <div class="info-row"><span>PKM Path</span><span style="color:#aaa;font-size:11px;">PKM LAUNCHER</span></div>
+    </div>
+  </div>
+
+</div>
+<div id="statusbar">
+  <span id="status-msg">Pronto</span>
+  <span>&#9889; PokBot v1.0.0</span>
+</div>
+<script>
+  let cur = null
+  async function loadScripts() {
+    const list = await api.listScripts()
+    const el = document.getElementById('script-list')
+    el.innerHTML = ''
+    list.forEach(name => {
+      const d = document.createElement('div')
+      d.className = 'script-item' + (name === cur ? ' active' : '')
+      d.innerHTML = '<span class="dot"></span><span>' + name + '</span>'
+      d.onclick = () => openScript(name)
+      el.appendChild(d)
+    })
+  }
+  async function openScript(name) {
+    cur = name
+    document.getElementById('editor').value = await api.readScript(name)
+    document.getElementById('current-file').textContent = name
+    loadScripts()
+  }
+  async function saveScript() {
+    if (!cur) return alert('Nenhum script aberto!')
+    await api.saveScript(cur, document.getElementById('editor').value)
+    setStatus('Salvo: ' + cur)
+  }
+  async function newScript() {
+    const name = prompt('Nome do script:')
+    if (!name) return
+    await api.newScript(name)
+    await loadScripts()
+    openScript(name.endsWith('.lua') ? name : name + '.lua')
+  }
+  async function deleteScript() {
+    if (!cur) return alert('Nenhum script selecionado!')
+    if (!confirm('Deletar ' + cur + '?')) return
+    await api.deleteScript(cur)
+    cur = null
+    document.getElementById('editor').value = ''
+    document.getElementById('current-file').textContent = 'nenhum arquivo aberto'
+    await loadScripts()
+  }
+  async function sendToPKM() {
+    if (!cur) return alert('Nenhum script selecionado!')
+    await saveScript()
+    await api.sendToPKM(cur)
+    setStatus('Enviado: ' + cur)
+  }
+  async function importScript() {
+    const files = await api.importScript()
+    if (files.length) { await loadScripts(); openScript(files[0]) }
+  }
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'))
+    const tabs = ['scripts','cavebot','healer','targeting','alerts','info']
+    document.querySelectorAll('.tab')[tabs.indexOf(tab)].classList.add('active')
+    document.getElementById('tab-' + tab).classList.add('active')
+  }
+  function setStatus(msg) {
+    const el = document.getElementById('status-msg')
+    el.textContent = msg; el.style.color = '#27ae60'
+    setTimeout(() => { el.textContent = 'Pronto'; el.style.color = '#555' }, 3000)
+  }
+  loadScripts()
+</script>
+</body>
+</html>
