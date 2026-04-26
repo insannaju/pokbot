@@ -1,13 +1,14 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron')
 const path = require('path')
 const fs = require('fs')
+const { exec } = require('child_process')
 
 const PKM_PATH = 'C:\\Users\\User\\Desktop\\PKM LAUNCHER'
 const SCRIPTS_PATH = path.join(__dirname, 'scripts')
 
 if (!fs.existsSync(SCRIPTS_PATH)) fs.mkdirSync(SCRIPTS_PATH)
 
-let loginWin, mainWin
+let loginWin, selectWin, mainWin
 
 function createLogin() {
   loginWin = new BrowserWindow({
@@ -19,9 +20,19 @@ function createLogin() {
   loginWin.loadFile('login.html')
 }
 
+function createSelect() {
+  selectWin = new BrowserWindow({
+    width: 340, height: 280,
+    frame: false, resizable: false,
+    icon: path.join(__dirname, 'icon.ico'),
+    webPreferences: { preload: path.join(__dirname, 'preload.js'), nodeIntegration: false, contextIsolation: true }
+  })
+  selectWin.loadFile('select.html')
+}
+
 function createMain() {
   mainWin = new BrowserWindow({
-    width: 900, height: 620,
+    width: 920, height: 640,
     frame: false, resizable: true,
     icon: path.join(__dirname, 'icon.ico'),
     webPreferences: { preload: path.join(__dirname, 'preload.js'), nodeIntegration: false, contextIsolation: true }
@@ -31,18 +42,53 @@ function createMain() {
 
 app.whenReady().then(createLogin)
 
+// Login
 ipcMain.on('do-login', (e, { user, pass }) => {
   if (user && pass) {
     loginWin.close()
-    createMain()
+    createSelect()
   } else {
     e.reply('login-error', 'Usuario ou senha invalidos')
   }
 })
 
+// Listar processos PKM
+ipcMain.handle('list-processes', () => {
+  return new Promise((resolve) => {
+    exec('tasklist /FO CSV /NH', (err, stdout) => {
+      if (err) { resolve([]); return }
+      const procs = []
+      stdout.split('\n').forEach(line => {
+        const parts = line.replace(/"/g,'').split(',')
+        if (parts.length >= 2) {
+          const name = parts[0].trim()
+          const pid = parts[1].trim()
+          if (name && pid && (
+            name.toLowerCase().includes('pkm') ||
+            name.toLowerCase().includes('poke') ||
+            name.toLowerCase().includes('tibia') ||
+            name.toLowerCase().includes('otclient')
+          )) {
+            procs.push({ name, pid })
+          }
+        }
+      })
+      resolve(procs)
+    })
+  })
+})
+
+// Selecionar cliente
+ipcMain.on('select-client', (e, { pid, name }) => {
+  if (selectWin) selectWin.close()
+  createMain()
+})
+
+// Fechar / minimizar
 ipcMain.on('close-app', () => { app.quit() })
 ipcMain.on('minimize-app', () => { BrowserWindow.getFocusedWindow()?.minimize() })
 
+// Scripts
 ipcMain.handle('list-scripts', () => {
   return fs.readdirSync(SCRIPTS_PATH).filter(f => f.endsWith('.lua'))
 })
