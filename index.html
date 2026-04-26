@@ -1,222 +1,661 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>PokBot</title>
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { background:#2b2b2b; color:#ccc; font-family:Arial,sans-serif; font-size:13px; height:100vh; display:flex; flex-direction:column; user-select:none; }
-    #titlebar { background:#1a1a1a; height:30px; display:flex; align-items:center; padding:0 10px; -webkit-app-region:drag; flex-shrink:0; }
-    #titlebar span { color:#e63946; font-weight:bold; font-size:13px; letter-spacing:2px; }
-    .wbtns { margin-left:auto; display:flex; gap:6px; -webkit-app-region:no-drag; }
-    .wbtn { width:12px; height:12px; border-radius:50%; border:none; cursor:pointer; }
-    .wbtn.min{background:#febc2e;} .wbtn.close{background:#ff5f57;}
-    #menubar { background:#252525; padding:2px 8px; display:flex; gap:2px; border-bottom:1px solid #111; flex-shrink:0; }
-    .menu-item { padding:3px 10px; cursor:pointer; border-radius:3px; }
-    .menu-item:hover { background:#3a3a3a; }
-    #tabs { background:#1e1e1e; display:flex; gap:2px; padding:4px 8px 0; border-bottom:1px solid #111; flex-shrink:0; }
-    .tab { padding:5px 14px; cursor:pointer; border-radius:4px 4px 0 0; background:#2b2b2b; border:1px solid #111; border-bottom:none; }
-    .tab.active { background:#333; color:#fff; }
-    .tab:hover:not(.active) { background:#2f2f2f; }
-    #main { display:flex; flex:1; overflow:hidden; }
-    #sidebar { width:200px; background:#1e1e1e; border-right:1px solid #111; display:flex; flex-direction:column; flex-shrink:0; }
-    #sidebar-header { padding:6px 10px; background:#252525; font-size:12px; color:#e63946; font-weight:bold; }
-    #script-list { flex:1; overflow-y:auto; }
-    .script-item { padding:7px 12px; cursor:pointer; border-bottom:1px solid #252525; display:flex; align-items:center; gap:6px; }
-    .script-item:hover { background:#2a2a2a; }
-    .script-item.active { background:#333; color:#fff; }
-    .dot { width:7px; height:7px; border-radius:50%; background:#555; flex-shrink:0; }
-    .script-item.active .dot { background:#e63946; }
-    #sidebar-btns { padding:8px; display:flex; flex-direction:column; gap:4px; }
-    #editor-area { flex:1; display:flex; flex-direction:column; }
-    #editor-toolbar { background:#252525; padding:4px 10px; display:flex; gap:6px; align-items:center; border-bottom:1px solid #111; }
-    #current-file { color:#e63946; font-size:12px; font-weight:bold; margin-right:auto; }
-    #editor { flex:1; background:#1a1a1a; color:#d4d4d4; padding:12px; font-family:'Courier New',monospace; font-size:13px; resize:none; border:none; outline:none; }
-    #rightpanel { width:160px; background:#252525; border-left:1px solid #111; padding:8px; display:flex; flex-direction:column; gap:6px; flex-shrink:0; }
-    #rightpanel h3 { color:#aaa; font-size:11px; text-align:center; margin-bottom:2px; }
-    .section-title { color:#777; font-size:10px; margin-top:4px; }
-    .btn { padding:5px 8px; border:none; border-radius:3px; cursor:pointer; font-size:12px; width:100%; text-align:center; }
-    .btn-green{background:#27ae60;color:#fff;} .btn-green:hover{background:#219a52;}
-    .btn-red{background:#c0392b;color:#fff;} .btn-red:hover{background:#a93226;}
-    .btn-blue{background:#2980b9;color:#fff;} .btn-blue:hover{background:#2471a3;}
-    .btn-gray{background:#3a3a3a;color:#ccc;} .btn-gray:hover{background:#444;}
-    .btn-pink{background:#e63946;color:#fff;} .btn-pink:hover{background:#c1121f;}
-    #statusbar { background:#1a1a1a; padding:3px 10px; font-size:11px; color:#555; border-top:1px solid #111; flex-shrink:0; display:flex; justify-content:space-between; }
-    .tab-content { display:none; flex:1; padding:16px; overflow-y:auto; }
-    .tab-content.active { display:flex; flex-direction:column; gap:10px; }
-    .info-box { background:#1e1e1e; border:1px solid #333; border-radius:4px; padding:12px; }
-    .info-box h4 { color:#e63946; margin-bottom:6px; }
-    .info-row { display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px solid #2a2a2a; }
-    .info-row:last-child { border-bottom:none; }
-    ::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-track{background:#1a1a1a;} ::-webkit-scrollbar-thumb{background:#444;border-radius:3px;}
-  </style>
+<meta charset="UTF-8">
+<title>PokBot</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#2b2b2b;color:#ccc;font-family:Arial,sans-serif;font-size:12px;height:100vh;display:flex;flex-direction:column;user-select:none;overflow:hidden}
+#titlebar{background:#1a1a1a;height:28px;display:flex;align-items:center;padding:0 8px;flex-shrink:0;-webkit-app-region:drag}
+#titlebar span{color:#e63946;font-weight:bold;font-size:12px;letter-spacing:2px}
+.wbtns{margin-left:auto;display:flex;gap:5px;-webkit-app-region:no-drag}
+.wbtn{width:11px;height:11px;border-radius:50%;border:none;cursor:pointer}
+.wbtn.min{background:#febc2e}.wbtn.close{background:#ff5f57}
+#menubar{background:#252525;padding:1px 6px;display:flex;gap:1px;border-bottom:1px solid #111;flex-shrink:0;position:relative;z-index:100}
+.menu-item{padding:3px 10px;cursor:pointer;border-radius:3px;font-size:12px;position:relative}
+.menu-item:hover{background:#3a3a3a}
+.dropdown{display:none;position:absolute;top:22px;left:0;background:#2d2d2d;border:1px solid #444;border-radius:3px;z-index:200;min-width:180px;box-shadow:0 4px 12px rgba(0,0,0,0.5)}
+.dropdown.show{display:block}
+.dd-item{padding:5px 14px;cursor:pointer;font-size:12px;white-space:nowrap}
+.dd-item:hover{background:#3a3a3a}
+.dd-sep{border-top:1px solid #444;margin:2px 0}
+.dd-item.checked::before{content:"✓ ";color:#e63946}
+.dd-sub{position:relative}
+.dd-sub::after{content:"▶";float:right;font-size:10px;color:#888;margin-left:10px}
+.submenu{display:none;position:absolute;left:100%;top:0;background:#2d2d2d;border:1px solid #444;border-radius:3px;min-width:180px;box-shadow:0 4px 12px rgba(0,0,0,0.5)}
+.dd-sub:hover .submenu{display:block}
+#tabs{background:#1e1e1e;display:flex;padding:3px 6px 0;border-bottom:1px solid #111;flex-shrink:0;gap:1px}
+.tab{padding:4px 14px;cursor:pointer;border-radius:3px 3px 0 0;background:#252525;border:1px solid #333;border-bottom:none;font-size:12px}
+.tab.active{background:#2b2b2b;color:#fff;border-bottom:1px solid #2b2b2b}
+.tab:hover:not(.active){background:#2f2f2f}
+#main{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.tab-content{display:none;flex:1;flex-direction:column;overflow:hidden}
+.tab-content.active{display:flex}
+.subtabs{background:#252525;display:flex;padding:3px 6px 0;border-bottom:1px solid #111;flex-shrink:0;gap:1px}
+.stab{padding:3px 12px;cursor:pointer;border-radius:3px 3px 0 0;background:#2b2b2b;border:1px solid #333;border-bottom:none;font-size:12px}
+.stab.active{background:#333;color:#fff}
+.stab:hover:not(.active){background:#2f2f2f}
+.scontent{display:none;flex:1;overflow:auto;flex-direction:column}
+.scontent.active{display:flex}
+.enabled-bar{background:#1e1e1e;padding:5px 12px;display:flex;align-items:center;gap:6px;border-bottom:1px solid #111;font-size:12px;flex-shrink:0}
+.enabled-bar label{cursor:pointer}
+.split{display:flex;flex:1;overflow:hidden}
+.left-panel{flex:1;overflow:auto}
+.right-panel{width:185px;background:#1e1e1e;border-left:1px solid #111;padding:10px;display:flex;flex-direction:column;gap:5px;flex-shrink:0;overflow-y:auto}
+.rp-title{color:#e63946;font-size:11px;font-weight:bold;margin-bottom:4px;padding-bottom:3px;border-bottom:1px solid #333}
+.rp-label{color:#888;font-size:11px;margin-top:3px}
+.rp-input{width:100%;background:#252525;border:1px solid #444;color:#ccc;padding:4px 6px;border-radius:3px;font-size:12px}
+.rp-select{width:100%;background:#252525;border:1px solid #444;color:#ccc;padding:3px 4px;border-radius:3px;font-size:12px}
+.rp-row{display:flex;gap:4px;align-items:center}
+.rp-row .rp-input{flex:1}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{background:#1e1e1e;color:#aaa;padding:4px 8px;text-align:left;border-bottom:1px solid #333;position:sticky;top:0;font-weight:normal;white-space:nowrap}
+tbody td{padding:4px 8px;border-bottom:1px solid #222;white-space:nowrap}
+tbody tr:hover td{background:#2f2f2f}
+tbody tr.sel td{background:#333;color:#fff}
+td select,td input[type=text]{background:#252525;border:1px solid #333;color:#ccc;font-size:11px;padding:1px 3px;border-radius:2px}
+.sec{padding:12px}
+.sec-title{color:#e63946;font-size:11px;font-weight:bold;margin:8px 0 6px;padding-bottom:3px;border-bottom:1px solid #333}
+.sec-title:first-child{margin-top:0}
+.field{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.field label{width:130px;color:#aaa;font-size:12px;flex-shrink:0}
+.field input[type=text],.field select{background:#1a1a1a;border:1px solid #444;color:#ccc;padding:3px 6px;border-radius:3px;font-size:12px;width:130px}
+.field input[type=checkbox]{width:14px;height:14px;cursor:pointer}
+.chk{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px;cursor:pointer}
+.chk input{width:14px;height:14px}
+.btn{padding:4px 8px;border:none;border-radius:3px;cursor:pointer;font-size:11px;width:100%;text-align:center;margin-bottom:2px}
+.btn-green{background:#27ae60;color:#fff}.btn-green:hover{background:#219a52}
+.btn-red{background:#c0392b;color:#fff}.btn-red:hover{background:#a93226}
+.btn-blue{background:#2980b9;color:#fff}.btn-blue:hover{background:#2471a3}
+.btn-gray{background:#3a3a3a;color:#ccc}.btn-gray:hover{background:#444}
+.btn-pink{background:#e63946;color:#fff}.btn-pink:hover{background:#c1121f}
+.btn-sm{padding:3px 10px;font-size:11px;border:none;border-radius:3px;cursor:pointer}
+/* Waypoints */
+.wp-layout{display:flex;flex:1;overflow:hidden}
+.wp-table{flex:1;overflow:auto}
+.wp-panel{width:130px;background:#1e1e1e;border-left:1px solid #111;padding:7px;display:flex;flex-direction:column;gap:3px;flex-shrink:0}
+.wp-btn{padding:4px 6px;border:none;border-radius:3px;cursor:pointer;font-size:11px;background:#333;color:#ccc;text-align:center;width:100%}
+.wp-btn:hover{background:#444}
+.wp-lbl{color:#777;font-size:10px;margin-top:3px;text-align:center}
+.dir-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:2px}
+.dir-btn{padding:3px 2px;border:none;border-radius:3px;cursor:pointer;font-size:10px;background:#333;color:#ccc;text-align:center}
+.dir-btn:hover,.dir-btn.active{background:#e63946;color:#fff}
+/* Scripts */
+.scripts-layout{display:flex;flex:1;overflow:hidden}
+.scripts-sidebar{width:200px;background:#1e1e1e;border-right:1px solid #111;display:flex;flex-direction:column;flex-shrink:0}
+.ss-header{padding:5px 10px;background:#252525;font-size:11px;color:#e63946;font-weight:bold;border-bottom:1px solid #111}
+.ss-list{flex:1;overflow-y:auto}
+.si{padding:6px 10px;cursor:pointer;border-bottom:1px solid #222;display:flex;align-items:center;gap:5px;font-size:12px}
+.si:hover{background:#252525}
+.si.active{background:#333;color:#fff}
+.sdot{width:6px;height:6px;border-radius:50%;background:#555;flex-shrink:0}
+.si.active .sdot{background:#e63946}
+.ss-btns{padding:6px;display:flex;flex-direction:column;gap:3px}
+.editor-area{flex:1;display:flex;flex-direction:column}
+.editor-tb{background:#252525;padding:3px 8px;display:flex;gap:5px;align-items:center;border-bottom:1px solid #111;flex-shrink:0}
+.cur-file{color:#e63946;font-size:11px;font-weight:bold;margin-right:auto}
+#editor{flex:1;background:#1a1a1a;color:#d4d4d4;padding:10px;font-family:'Courier New',monospace;font-size:12px;resize:none;border:none;outline:none}
+/* Persistent scripts two-column */
+.ps-layout{display:flex;flex:1;overflow:hidden}
+.ps-left{flex:1;overflow:auto;border-right:1px solid #111}
+.ps-right{width:200px;background:#1e1e1e;overflow-y:auto}
+.ps-right-header{padding:5px 10px;background:#252525;font-size:11px;color:#aaa;border-bottom:1px solid #111}
+.ps-file{padding:5px 10px;cursor:pointer;border-bottom:1px solid #222;font-size:12px}
+.ps-file:hover{background:#252525;color:#fff}
+/* Info layout */
+.info-layout{display:flex;flex:1;overflow:hidden}
+.info-left{width:260px;border-right:1px solid #111;overflow-y:auto;padding:12px}
+.info-right{flex:1;overflow-y:auto;padding:12px}
+.info-field{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px}
+.info-field label{width:100px;color:#888;font-size:12px}
+.info-val{flex:1;background:#1a1a1a;border:1px solid #333;color:#27ae60;padding:2px 6px;border-radius:3px;font-size:12px}
+/* Slider */
+input[type=range]{width:100px;accent-color:#e63946}
+#statusbar{background:#1a1a1a;padding:2px 10px;font-size:11px;color:#555;border-top:1px solid #111;flex-shrink:0;display:flex;justify-content:space-between}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:#1a1a1a}::-webkit-scrollbar-thumb{background:#444;border-radius:3px}
+</style>
 </head>
 <body>
+
 <div id="titlebar">
-  <span>&#9889; PokBot</span>
+  <span>⚡ PokBot v1.0.0</span>
   <div class="wbtns">
-    <button class="wbtn min" onclick="api.minimize()"></button>
-    <button class="wbtn close" onclick="api.close()"></button>
+    <button class="wbtn min" onclick="api&&api.minimize()"></button>
+    <button class="wbtn close" onclick="api&&api.close()"></button>
   </div>
 </div>
+
 <div id="menubar">
-  <div class="menu-item">Arquivo</div>
-  <div class="menu-item">Opcoes</div>
-  <div class="menu-item">Ajuda</div>
-  <div class="menu-item">Misc</div>
+  <div class="menu-item" onclick="toggleMenu('file')">Arquivo
+    <div class="dropdown" id="m-file">
+      <div class="dd-item">Novo</div>
+      <div class="dd-sep"></div>
+      <div class="dd-item dd-sub">Salvar
+        <div class="submenu">
+          <div class="dd-item">Salvar configurações como...</div>
+          <div class="dd-item">Salvar cavebot como...</div>
+          <div class="dd-item">Salvar ambos como...</div>
+        </div>
+      </div>
+      <div class="dd-item dd-sub">Carregar
+        <div class="submenu">
+          <div class="dd-item">Carregar configurações...</div>
+          <div class="dd-item">Carregar cavebot...</div>
+          <div class="dd-item">Carregar ambos...</div>
+        </div>
+      </div>
+      <div class="dd-sep"></div>
+      <div class="dd-item">Sair</div>
+    </div>
+  </div>
+  <div class="menu-item" onclick="toggleMenu('options')">Opções
+    <div class="dropdown" id="m-options" style="left:55px">
+      <div class="dd-item" onclick="toggleCheck(this)">Sempre visível</div>
+      <div class="dd-item" onclick="toggleCheck(this)">Bot pausado</div>
+      <div class="dd-item checked" onclick="toggleCheck(this)">Modo escuro</div>
+    </div>
+  </div>
+  <div class="menu-item" onclick="toggleMenu('help')">Ajuda
+    <div class="dropdown" id="m-help" style="left:118px">
+      <div class="dd-item">Ver documentação</div>
+      <div class="dd-item">Visitar fórum</div>
+      <div class="dd-item">Créditos</div>
+    </div>
+  </div>
+  <div class="menu-item" onclick="toggleMenu('misc')">Misc
+    <div class="dropdown" id="m-misc" style="left:175px">
+      <div class="dd-item">Mostrar console Lua</div>
+    </div>
+  </div>
 </div>
+
 <div id="tabs">
-  <div class="tab active" onclick="switchTab('scripts')">Scripts</div>
-  <div class="tab" onclick="switchTab('cavebot')">Cavebot</div>
-  <div class="tab" onclick="switchTab('healer')">Healer</div>
-  <div class="tab" onclick="switchTab('targeting')">Targeting</div>
+  <div class="tab active" onclick="switchTab('healer')">Healer</div>
   <div class="tab" onclick="switchTab('alerts')">Alertas</div>
-  <div class="tab" onclick="switchTab('info')">Info & Opcoes</div>
+  <div class="tab" onclick="switchTab('targeting')">Targeting</div>
+  <div class="tab" onclick="switchTab('cavebot')">Cavebot</div>
+  <div class="tab" onclick="switchTab('scripts')">Scripts</div>
+  <div class="tab" onclick="switchTab('looting')">Looting</div>
+  <div class="tab" onclick="switchTab('info')">Info & Opções</div>
 </div>
+
 <div id="main">
 
-  <!-- SCRIPTS -->
-  <div id="tab-scripts" class="tab-content active" style="display:flex;flex-direction:row;padding:0;gap:0;flex:1;">
-    <div id="sidebar">
-      <div id="sidebar-header">Scripts Lua</div>
-      <div id="script-list"></div>
-      <div id="sidebar-btns">
-        <button class="btn btn-gray" onclick="importScript()">Importar</button>
-        <button class="btn btn-gray" onclick="newScript()">+ Novo</button>
+<!-- HEALER -->
+<div id="tab-healer" class="tab-content active">
+  <div class="subtabs">
+    <div class="stab active" onclick="switchSub('healer','spell')">Spell healer</div>
+    <div class="stab" onclick="switchSub('healer','item')">Item healer</div>
+    <div class="stab" onclick="switchSub('healer','condition')">Condition healer</div>
+  </div>
+  <div id="healer-spell" class="scontent active">
+    <div class="enabled-bar"><input type="checkbox" id="spellEn"><label for="spellEn">Ativado</label></div>
+    <div class="split">
+      <div class="left-panel">
+        <table><thead><tr><th></th><th>Nome da regra</th><th>Feitiço</th><th>Condição</th></tr></thead>
+        <tbody id="spell-tbody"><tr><td colspan="4" style="color:#555;text-align:center;padding:16px">Nenhuma regra</td></tr></tbody></table>
+      </div>
+      <div class="right-panel">
+        <div class="rp-title">Adicionar regra</div>
+        <div class="rp-label">Nome</div><input class="rp-input" id="sh-name" placeholder="Nome da regra">
+        <div class="rp-label">Feitiço</div><input class="rp-input" id="sh-spell" placeholder="ex: exura">
+        <div class="rp-label">Condição</div>
+        <select class="rp-select" id="sh-cond"><option>HP abaixo de %</option><option>Mana abaixo de %</option><option>Não hasted</option><option>Envenenado</option></select>
+        <div class="rp-row"><input class="rp-input" id="sh-from" placeholder="0" style="width:48px"><span style="color:#777">a</span><input class="rp-input" id="sh-to" placeholder="100" style="width:48px"></div>
+        <div class="rp-label">Cond. extra</div>
+        <select class="rp-select" id="sh-extra"><option>Nenhuma</option><option>Não hasted</option><option>Envenenado</option><option>Queimando</option></select>
+        <div class="rp-row"><input class="rp-input" placeholder="0" style="width:48px"><span style="color:#777">a</span><input class="rp-input" placeholder="0" style="width:48px"></div>
+        <div class="rp-label">Delay (ms)</div>
+        <div class="rp-row"><input class="rp-input" id="sh-delay1" value="100" style="width:48px"><span style="color:#777">a</span><input class="rp-input" id="sh-delay2" value="100" style="width:48px"></div>
+        <div class="rp-label">Prioridade</div><input type="range" min="0" max="10" value="0" style="width:100%">
+        <button class="btn btn-green" onclick="addSpellRule()" style="margin-top:6px">Adicionar regra</button>
+        <button class="btn btn-red" onclick="delSpellRule()">Deletar regra</button>
       </div>
     </div>
-    <div id="editor-area">
-      <div id="editor-toolbar">
-        <span id="current-file">nenhum arquivo aberto</span>
-        <button class="btn btn-gray" onclick="saveScript()" style="width:auto;padding:4px 12px;">Salvar</button>
-        <button class="btn btn-red" onclick="deleteScript()" style="width:auto;padding:4px 12px;">Deletar</button>
-        <button class="btn btn-green" onclick="sendToPKM()" style="width:auto;padding:4px 12px;">Enviar PKM</button>
+  </div>
+  <div id="healer-item" class="scontent">
+    <div class="enabled-bar"><input type="checkbox"><label>Ativado</label></div>
+    <div class="split">
+      <div class="left-panel">
+        <table><thead><tr><th></th><th>Nome da regra</th><th>Item ID</th><th>Condição</th></tr></thead>
+        <tbody><tr><td colspan="4" style="color:#555;text-align:center;padding:16px">Nenhuma regra</td></tr></tbody></table>
       </div>
-      <textarea id="editor" placeholder="-- Selecione ou crie um script Lua..."></textarea>
-    </div>
-    <div id="rightpanel">
-      <h3>Acoes</h3>
-      <button class="btn btn-pink" onclick="sendToPKM()">Enviar PKM</button>
-      <button class="btn btn-green" onclick="saveScript()">Salvar</button>
-      <button class="btn btn-blue" onclick="importScript()">Importar</button>
-      <button class="btn btn-gray" onclick="newScript()">+ Novo</button>
-      <button class="btn btn-red" onclick="deleteScript()">Deletar</button>
-      <div class="section-title">PKM LAUNCHER</div>
-      <div style="font-size:10px;color:#555;word-break:break-all;">Desktop\PKM LAUNCHER</div>
+      <div class="right-panel">
+        <div class="rp-title">Adicionar regra</div>
+        <div class="rp-label">Nome</div><input class="rp-input" placeholder="Nome da regra">
+        <div class="rp-label">Item ID</div><input class="rp-input" placeholder="ex: 3031">
+        <div class="rp-label">Condição</div>
+        <select class="rp-select"><option>HP abaixo de %</option><option>Mana abaixo de %</option></select>
+        <div class="rp-row"><input class="rp-input" value="0" style="width:48px"><span style="color:#777">a</span><input class="rp-input" value="100" style="width:48px"></div>
+        <div class="rp-label">Delay (ms)</div>
+        <div class="rp-row"><input class="rp-input" value="100" style="width:48px"><span style="color:#777">a</span><input class="rp-input" value="100" style="width:48px"></div>
+        <button class="btn btn-green" style="margin-top:6px">Adicionar regra</button>
+        <button class="btn btn-red">Deletar regra</button>
+      </div>
     </div>
   </div>
+  <div id="healer-condition" class="scontent">
+    <div class="enabled-bar"><input type="checkbox"><label>Ativado</label></div>
+    <div class="split">
+      <div class="left-panel">
+        <table><thead><tr><th></th><th>Nome da regra</th><th>Feitiço</th><th>Condição</th></tr></thead>
+        <tbody><tr><td colspan="4" style="color:#555;text-align:center;padding:16px">Nenhuma regra</td></tr></tbody></table>
+      </div>
+      <div class="right-panel">
+        <div class="rp-title">Adicionar regra</div>
+        <div class="rp-label">Nome</div><input class="rp-input" placeholder="Nome">
+        <div class="rp-label">Feitiço</div><input class="rp-input" placeholder="ex: exura">
+        <div class="rp-label">Condição</div>
+        <select class="rp-select"><option>Não hasted</option><option>Envenenado</option><option>Queimando</option><option>Paralisado</option></select>
+        <div class="rp-label">Cond. extra</div>
+        <select class="rp-select"><option>Nenhuma</option><option>Não hasted</option></select>
+        <div class="rp-label">Delay (ms)</div>
+        <div class="rp-row"><input class="rp-input" value="100" style="width:48px"><span style="color:#777">a</span><input class="rp-input" value="100" style="width:48px"></div>
+        <div class="rp-label">Prioridade</div><input type="range" min="0" max="10" value="0" style="width:100%">
+        <button class="btn btn-green" style="margin-top:6px">Adicionar regra</button>
+        <button class="btn btn-red">Deletar regra</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-  <!-- CAVEBOT -->
-  <div id="tab-cavebot" class="tab-content" style="flex:1;">
-    <div class="info-box">
-      <h4>Cavebot</h4>
-      <p style="color:#666;font-size:12px;">Em breve — waypoints e acoes automaticas.</p>
-    </div>
+<!-- ALERTS -->
+<div id="tab-alerts" class="tab-content">
+  <div class="enabled-bar"><input type="checkbox" id="alertsEn"><label for="alertsEn">Ativado</label></div>
+  <div style="flex:1;overflow:auto">
+    <table>
+      <thead><tr><th>Nome do alerta</th><th>Som</th><th>Pausar bot</th><th>Logout</th><th>Valor</th></tr></thead>
+      <tbody id="alerts-tbody">
+        <tr><td>Jogador na tela</td><td><select><option>não</option><option>sim</option></select></td><td><select><option>não</option><option>sim</option></select></td><td><select><option>não</option><option>sim</option></select></td><td>&lt;WhiteList&gt;{vazio}</td></tr>
+        <tr><td>Jogador atacando</td><td><select><option>não</option><option>sim</option></select></td><td><select><option>não</option><option>sim</option></select></td><td><select><option>não</option><option>sim</option></select></td><td>&lt;WhiteList&gt;{vazio}</td></tr>
+        <tr><td>Monstro atacando</td><td><select><option>não</option><option>sim</option></select></td><td><select><option>não</option><option>sim</option></select></td><td><select><option>não</option><option>sim</option></select></td><td>&lt;WhiteList&gt;{vazio}</td></tr>
+        <tr><td>Mensagem privada</td><td><select><option>não</option><option>sim</option></select></td><td><select><option>não</option><option>sim</option></select></td><td><select><option>não</option><option>sim</option></select></td><td>&lt;WhiteList&gt;{vazio}</td></tr>
+        <tr><td>Mensagem padrão</td><td><select><option>não</option><option>sim</option></select></td><td><select><option>não</option><option>sim</option></select></td><td><select><option>não</option><option>sim</option></select></td><td>&lt;WhiteList&gt;{vazio}</td></tr>
+        <tr><td>Desconectado</td><td><select><option>não</option><option>sim</option></select></td><td><select><option>não</option><option>sim</option></select></td><td><select><option>não</option><option>sim</option></select></td><td></td></tr>
+        <tr><td>Personagem preso</td><td><select><option>não</option><option>sim</option></select></td><td><select><option>não</option><option>sim</option></select></td><td><select><option>não</option><option>sim</option></select></td><td><input type="text" value="60000" style="width:70px"> ms</td></tr>
+        <tr><td>HP abaixo de %</td><td><select><option>não</option><option>sim</option></select></td><td><select><option>não</option><option>sim</option></select></td><td><select><option>não</option><option>sim</option></select></td><td><input type="text" value="50" style="width:40px"> HP%</td></tr>
+        <tr><td>Mana abaixo de %</td><td><select><option>não</option><option>sim</option></select></td><td><select><option>não</option><option>sim</option></select></td><td><select><option>não</option><option>sim</option></select></td><td><input type="text" value="50" style="width:40px"> MP%</td></tr>
+        <tr><td>HP acima de %</td><td><select><option>não</option><option>sim</option></select></td><td><select><option>não</option><option>sim</option></select></td><td><select><option>não</option><option>sim</option></select></td><td><input type="text" value="50" style="width:40px"> HP%</td></tr>
+        <tr><td>Mana acima de %</td><td><select><option>não</option><option>sim</option></select></td><td><select><option>não</option><option>sim</option></select></td><td><select><option>não</option><option>sim</option></select></td><td><input type="text" value="50" style="width:40px"> MP%</td></tr>
+      </tbody>
+    </table>
   </div>
+</div>
 
-  <!-- HEALER -->
-  <div id="tab-healer" class="tab-content" style="flex:1;">
-    <div class="info-box">
-      <h4>Healer</h4>
-      <p style="color:#666;font-size:12px;">Em breve — cura automatica por HP/MP.</p>
+<!-- TARGETING -->
+<div id="tab-targeting" class="tab-content">
+  <div class="subtabs">
+    <div class="stab active" onclick="switchSub('targeting','settings')">Configurações</div>
+    <div class="stab" onclick="switchSub('targeting','creatures')">Lista de criaturas</div>
+  </div>
+  <div id="targeting-settings" class="scontent active">
+    <div class="enabled-bar"><input type="checkbox" id="targetEn"><label for="targetEn">Ativado</label></div>
+    <div class="split">
+      <div class="left-panel" style="overflow:auto">
+        <table><thead><tr><th></th><th>Descrição do perfil</th></tr></thead>
+        <tbody id="profile-tbody">
+          <tr class="sel"><td>✓</td><td>Nome: Default Profile, Prioridades: (30, 35, 20, 0) — Alcançável: false, Atirável: false</td></tr>
+        </tbody></table>
+      </div>
+      <div class="right-panel">
+        <div class="rp-title">Editar perfil</div>
+        <div class="rp-label">Nome do perfil</div><input class="rp-input" value="Default Profile">
+        <div class="rp-label" style="margin-top:6px;color:#ccc">Prioridades</div>
+        <div class="rp-label">Vida (30):</div><input type="range" min="0" max="100" value="30" style="width:100%">
+        <div class="rp-label">Proximidade (35):</div><input type="range" min="0" max="100" value="35" style="width:100%">
+        <div class="rp-label">Perigo (20):</div><input type="range" min="0" max="100" value="20" style="width:100%">
+        <div class="rp-label">Stick (0):</div><input type="range" min="0" max="100" value="0" style="width:100%">
+        <div class="rp-label" style="margin-top:6px;color:#ccc">Opções</div>
+        <div class="chk"><input type="checkbox"><span>Alvo deve ser alcançável</span></div>
+        <div class="chk"><input type="checkbox"><span>Alvo deve ser atirável</span></div>
+        <div class="chk"><input type="checkbox"><span>Ignorar tipo de criatura</span></div>
+        <button class="btn btn-green" style="margin-top:6px">Adicionar perfil</button>
+        <button class="btn btn-red">Deletar perfil</button>
+      </div>
     </div>
   </div>
+  <div id="targeting-creatures" class="scontent">
+    <div class="split">
+      <div class="left-panel">
+        <table><thead><tr><th></th><th>Nome</th><th>Qtd</th><th>Perigo</th><th>Evitar</th><th>Postura</th><th>Ação</th><th>Modo</th></tr></thead>
+        <tbody id="creature-tbody">
+          <tr class="sel" onclick="selRow(this)"><td>✓</td><td>Charmander*</td><td>1+</td><td>0</td><td>Sem evitar</td><td>Perseguir</td><td>Atacar</td><td>Sem mudança</td></tr>
+          <tr onclick="selRow(this)"><td>✓</td><td>Magikarp*</td><td>1+</td><td>0</td><td>Sem evitar</td><td>Sem movimento</td><td>Atacar</td><td>Sem mudança</td></tr>
+          <tr onclick="selRow(this)"><td>✓</td><td>Rattata*</td><td>1+</td><td>0</td><td>Sem evitar</td><td>Sem movimento</td><td>Atacar</td><td>Sem mudança</td></tr>
+        </tbody></table>
+      </div>
+      <div class="right-panel">
+        <div class="rp-title">Editar criatura</div>
+        <div class="rp-label">Nome</div><input class="rp-input" value="Charmander*">
+        <div class="rp-label">Qtd</div><input class="rp-input" value="1+">
+        <div class="rp-label">HP %</div>
+        <div class="rp-row"><input class="rp-input" value="0" style="width:48px"><span style="color:#777">a</span><input class="rp-input" value="100" style="width:48px"></div>
+        <div class="rp-label">Perigo</div><input class="rp-input" value="">
+        <div class="rp-label">Evitar</div><select class="rp-select"><option>Sem evitar</option><option>Sempre evitar</option></select>
+        <div class="rp-label">Postura</div><select class="rp-select"><option>Perseguir</option><option>Sem movimento</option></select>
+        <div class="rp-label">Distância</div>
+        <div class="rp-row"><input class="rp-input" value="1" style="width:48px"><span style="color:#777">a</span><input class="rp-input" value="1" style="width:48px"></div>
+        <div class="rp-label">Ação</div><select class="rp-select"><option>Atacar</option><option>Ignorar</option><option>Evitar</option></select>
+        <div class="rp-label">Modo</div><select class="rp-select"><option>Sem mudança</option><option>Ofensivo</option><option>Balanceado</option><option>Defensivo</option></select>
+        <button class="btn btn-green" style="margin-top:6px">Adicionar criatura</button>
+        <button class="btn btn-red">Deletar criatura</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-  <!-- TARGETING -->
-  <div id="tab-targeting" class="tab-content" style="flex:1;">
-    <div class="info-box">
-      <h4>Targeting</h4>
-      <p style="color:#666;font-size:12px;">Em breve — lista de criaturas e configuracoes de ataque.</p>
+<!-- CAVEBOT -->
+<div id="tab-cavebot" class="tab-content">
+  <div class="subtabs">
+    <div class="stab active" onclick="switchSub('cavebot','settings')">Configurações</div>
+    <div class="stab" onclick="switchSub('cavebot','scripts')">Scripts</div>
+    <div class="stab" onclick="switchSub('cavebot','waypoints')">Waypoints ✕</div>
+    <div class="stab" style="padding:3px 8px">+</div>
+  </div>
+  <div id="cavebot-settings" class="scontent active">
+    <div class="sec">
+      <div class="chk"><input type="checkbox" id="cbEn"><label for="cbEn">Ativado</label></div>
+      <div class="sec-title">Opções do Cavebot</div>
+      <div class="field"><label>Shovel ID</label><input type="text" value="3457"></div>
+      <div class="field"><label>Rope ID</label><input type="text" value="3003"></div>
+      <div class="field"><label>Machete ID</label><input type="text" value="3308"></div>
+      <div class="field"><label>Pick ID</label><input type="text" value="3456"></div>
+      <div class="field"><label>Idle timeout</label><input type="text" value="30000"> ms</div>
+      <div class="chk"><input type="checkbox"><span>Pausar bot ao morrer</span></div>
+      <div class="sec-title">Opções de pathfinding</div>
+      <div class="field"><label>Método de andar</label><select><option>Map clicks</option><option>Direções</option></select></div>
+      <div class="field"><label>Delay de andar</label><input type="text" value="100"> ms</div>
+      <div class="chk"><input type="checkbox"><span>Andar por jogadores</span></div>
+      <div class="chk"><input type="checkbox"><span>Ignorar não-caminháveis</span></div>
     </div>
   </div>
+  <div id="cavebot-scripts" class="scontent">
+    <div class="enabled-bar">
+      <input type="checkbox"><label>Ativado</label>
+      <div style="margin-left:auto;display:flex;gap:4px">
+        <button class="btn-sm btn-gray">+ Novo script</button>
+        <button class="btn-sm btn-blue">Carregar script</button>
+      </div>
+    </div>
+    <div class="ps-layout">
+      <div class="ps-left">
+        <table><thead><tr><th>Nome</th><th>Ativado</th><th>Script</th></tr></thead>
+        <tbody><tr><td colspan="3" style="color:#555;text-align:center;padding:16px">Nenhum script</td></tr></tbody></table>
+      </div>
+      <div class="ps-right">
+        <div class="ps-right-header">Arquivos disponíveis</div>
+        <div class="ps-file">automacro v2 (1).lua</div>
+        <div class="ps-file">global.lua</div>
+        <div class="ps-file">NEW_SWITCH.lua</div>
+      </div>
+    </div>
+  </div>
+  <div id="cavebot-waypoints" class="scontent">
+    <div class="wp-layout">
+      <div class="wp-table">
+        <table><thead><tr><th>ID</th><th>Tipo</th><th>Label</th><th>Coordenadas</th><th>Range</th><th>Ação</th></tr></thead>
+        <tbody id="wp-tbody">
+          <tr class="sel"><td>000</td><td><select><option>Node</option><option>Stand</option><option>Label</option><option>Shovel</option><option>Rope</option><option>Machete</option><option>Pick</option><option>Ladder</option><option>Use</option><option selected>Stand</option></select></td><td></td><td>x:1004 y:1007 z:8</td><td>1x1</td><td></td></tr>
+        </tbody></table>
+      </div>
+      <div class="wp-panel">
+        <div style="color:#aaa;font-size:11px;margin-bottom:2px">Range:</div>
+        <select style="width:100%;background:#252525;border:1px solid #333;color:#ccc;font-size:11px;padding:2px;border-radius:3px;margin-bottom:4px"><option>1x1 sqm</option><option>3x3 sqm</option><option>5x5 sqm</option></select>
+        <button class="wp-btn" onclick="addWP('Node')">Node</button>
+        <button class="wp-btn" onclick="addWP('Stand')">Stand</button>
+        <button class="wp-btn" onclick="addWP('Shovel')">Shovel</button>
+        <button class="wp-btn" onclick="addWP('Rope')">Rope</button>
+        <button class="wp-btn" onclick="addWP('Machete')">Machete</button>
+        <button class="wp-btn" onclick="addWP('Pick')">Pick</button>
+        <button class="wp-btn" onclick="addWP('Ladder')">Ladder</button>
+        <button class="wp-btn" onclick="addWP('Use')">Use</button>
+        <button class="wp-btn" onclick="addWP('Lure')">Lure</button>
+        <div class="wp-lbl">Ação</div>
+        <div class="dir-grid">
+          <button class="dir-btn">NW</button><button class="dir-btn">N</button><button class="dir-btn">NE</button>
+          <button class="dir-btn">W</button><button class="dir-btn active">C</button><button class="dir-btn">E</button>
+          <button class="dir-btn">SW</button><button class="dir-btn">S</button><button class="dir-btn">SE</button>
+        </div>
+        <button class="wp-btn btn-red" style="background:#c0392b;color:#fff;margin-top:6px">Deletar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-  <!-- ALERTAS -->
-  <div id="tab-alerts" class="tab-content" style="flex:1;">
-    <div class="info-box">
-      <h4>Alertas</h4>
-      <p style="color:#666;font-size:12px;">Em breve — alertas de jogador, monstro, mensagem privada, etc.</p>
+<!-- SCRIPTS -->
+<div id="tab-scripts" class="tab-content">
+  <div class="subtabs">
+    <div class="stab active" onclick="switchSub('scripts','persistent')">Persistente</div>
+    <div class="stab" onclick="switchSub('scripts','hotkeys')">Hotkeys</div>
+  </div>
+  <div id="scripts-persistent" class="scontent active">
+    <div class="enabled-bar">
+      <input type="checkbox" checked><label>Ativado</label>
+      <div style="margin-left:auto;display:flex;gap:4px">
+        <button class="btn-sm btn-gray" onclick="newScript()">+ Novo script</button>
+        <button class="btn-sm btn-blue" onclick="loadScript()">Carregar script</button>
+      </div>
+    </div>
+    <div class="ps-layout">
+      <div class="ps-left">
+        <table><thead><tr><th>Nome</th><th>Ativado</th><th>Script</th></tr></thead>
+        <tbody id="ps-tbody">
+          <tr class="sel" onclick="openScript(this,'Poke Skills')"><td>Poke Skills</td><td><input type="checkbox" checked></td><td style="color:#777;font-size:11px">local team = {"Treecko", "Spearow"...</td></tr>
+          <tr onclick="openScript(this,'Auto Fishing')"><td>Auto Fishing</td><td><input type="checkbox" checked></td><td style="color:#777;font-size:11px">local distance = 4 local fishingRod...</td></tr>
+          <tr onclick="openScript(this,'Auto Revive')"><td>Auto Revive</td><td><input type="checkbox" checked></td><td style="color:#777;font-size:11px">local revive_id = 26312...</td></tr>
+        </tbody></table>
+      </div>
+      <div class="ps-right">
+        <div class="ps-right-header">Arquivos disponíveis</div>
+        <div class="ps-file" onclick="loadScriptFile('automacro v2 (1).lua')">automacro v2 (1).lua</div>
+        <div class="ps-file" onclick="loadScriptFile('global.lua')">global.lua</div>
+        <div class="ps-file" onclick="loadScriptFile('NEW_SWITCH.lua')">NEW_SWITCH.lua</div>
+      </div>
     </div>
   </div>
+  <div id="scripts-hotkeys" class="scontent">
+    <div class="enabled-bar">
+      <input type="checkbox"><label>Ativado</label>
+      <div style="margin-left:auto;display:flex;gap:4px">
+        <button class="btn-sm btn-gray">+ Novo script</button>
+        <button class="btn-sm btn-blue">Carregar script</button>
+      </div>
+    </div>
+    <div class="ps-layout">
+      <div class="ps-left">
+        <table><thead><tr><th>Nome</th><th>Hotkey</th><th>Script</th></tr></thead>
+        <tbody><tr><td colspan="3" style="color:#555;text-align:center;padding:16px">Nenhum script</td></tr></tbody></table>
+      </div>
+      <div class="ps-right">
+        <div class="ps-right-header">Arquivos disponíveis</div>
+        <div class="ps-file">Toggle Pause.lua</div>
+      </div>
+    </div>
+  </div>
+</div>
 
-  <!-- INFO -->
-  <div id="tab-info" class="tab-content" style="flex:1;">
-    <div class="info-box">
-      <h4>Info & Opcoes</h4>
-      <div class="info-row"><span>Versao</span><span style="color:#e63946;">1.0.0</span></div>
-      <div class="info-row"><span>Node.js</span><span style="color:#27ae60;">OK</span></div>
-      <div class="info-row"><span>PKM Path</span><span style="color:#aaa;font-size:11px;">PKM LAUNCHER</span></div>
+<!-- LOOTING -->
+<div id="tab-looting" class="tab-content">
+  <div class="subtabs">
+    <div class="stab active" onclick="switchSub('looting','settings')">Configurações</div>
+    <div class="stab" onclick="switchSub('looting','lootlist')">Loot list</div>
+  </div>
+  <div id="looting-settings" class="scontent active">
+    <div class="sec">
+      <div class="chk"><input type="checkbox" id="lootEn"><label for="lootEn">Ativado</label></div>
+      <div class="sec-title">Opções</div>
+      <div class="field"><label>Looting range</label><select><option>1 sqm</option><option>5 sqms</option><option>10 sqms</option><option>25 sqms</option><option>Sem limite</option></select></div>
+      <div class="field"><label>Looting policy</label><select><option>Immediately</option><option>Delayed</option></select></div>
+      <div class="chk"><input type="checkbox"><span>Comer comida do cadáver</span></div>
+      <div class="chk"><input type="checkbox"><span>Abrir BPs ao logar</span></div>
+      <div class="chk"><input type="checkbox"><span>Abrir próxima BP</span></div>
+    </div>
+    <div style="padding:0 12px">
+      <div class="sec-title">Destinos</div>
+      <button class="btn-sm btn-gray" style="margin-bottom:6px">+ Adicionar destino</button>
+      <table><thead><tr><th>Nome</th><th>Contentor</th></tr></thead>
+      <tbody><tr><td colspan="2" style="color:#555;text-align:center;padding:12px">Nenhum destino</td></tr></tbody></table>
     </div>
   </div>
+  <div id="looting-lootlist" class="scontent">
+    <div class="split">
+      <div class="left-panel">
+        <table><thead><tr><th>Item ID</th><th>Nome</th><th>Ação</th><th>Destino</th></tr></thead>
+        <tbody id="loot-tbody">
+          <tr class="sel"><td>11228</td><td>ruby</td><td>Loot</td><td>zxcz</td></tr>
+          <tr><td>11237</td><td>apple</td><td>Loot</td><td>zxcz</td></tr>
+          <tr><td>11268</td><td>ice orb</td><td>Loot</td><td>zxcz</td></tr>
+          <tr><td>24661</td><td>cassino coin</td><td>Loot</td><td>zxcz</td></tr>
+          <tr><td>12749</td><td>staryu shell</td><td>Loot</td><td>zxcz</td></tr>
+        </tbody></table>
+      </div>
+      <div class="right-panel">
+        <div class="rp-title">Adicionar item</div>
+        <div class="rp-label">Item ID</div><input class="rp-input" value="100">
+        <div class="rp-label">Nome</div><input class="rp-input" placeholder="Nome do item">
+        <div class="rp-label">Preço (gp)</div><input class="rp-input" value="0">
+        <div class="rp-label">Peso (oz.)</div><input class="rp-input" value="0,00">
+        <div class="rp-label">Destino</div><input class="rp-input" placeholder="">
+        <div class="rp-label">Ação</div><select class="rp-select"><option>Loot</option><option>Leave</option></select>
+        <div class="rp-label">Condição</div><select class="rp-select"><option>Always loot</option><option>Loot if value</option></select>
+        <button class="btn btn-green" style="margin-top:6px">Adicionar item</button>
+        <button class="btn btn-red">Deletar item</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- INFO -->
+<div id="tab-info" class="tab-content">
+  <div class="info-layout">
+    <div class="info-left">
+      <div class="sec-title">Opções</div>
+      <div class="chk"><input type="checkbox"><span>Ler tiles do mapa</span></div>
+      <div class="chk"><input type="checkbox" disabled><span style="color:#555">Verificar andar específico</span></div>
+      <div class="chk"><input type="checkbox" disabled><span style="color:#555">Distância de tiles</span></div>
+      <div class="chk"><input type="checkbox" disabled><span style="color:#555">Ler itens do chão</span></div>
+      <div class="chk"><input type="checkbox"><span>Apenas criaturas do targeting</span></div>
+      <div class="chk"><input type="checkbox"><span>Mostrar ID de item ao olhar</span></div>
+      <div class="field" style="margin-top:4px"><label>Prioridade de refresh</label><input type="range" min="1" max="10" value="5" style="width:80px"></div>
+      <div class="sec-title" style="margin-top:10px">Quick toggles</div>
+      <div class="chk"><input type="checkbox"><span>Spell healer ativado</span></div>
+      <div class="chk"><input type="checkbox"><span>Item healer ativado</span></div>
+      <div class="chk"><input type="checkbox"><span>Condition healer ativado</span></div>
+      <div class="chk"><input type="checkbox"><span>Alertas ativados</span></div>
+      <div class="chk"><input type="checkbox"><span>Targeting ativado</span></div>
+      <div class="chk"><input type="checkbox"><span>Cavebot ativado</span></div>
+      <div class="chk"><input type="checkbox"><span>Cavebot scripts ativado</span></div>
+      <div class="chk"><input type="checkbox" checked><span>Scripts persistentes ativado</span></div>
+      <div class="chk"><input type="checkbox"><span>Hotkey scripts ativado</span></div>
+      <div class="chk"><input type="checkbox"><span>Looting ativado</span></div>
+    </div>
+    <div class="info-right">
+      <div class="sec-title">Informações — Jogador local</div>
+      <div class="info-field"><label>Nome:</label><span class="info-val" id="i-name"></span></div>
+      <div class="info-field"><label>Level:</label><span class="info-val" id="i-level"></span></div>
+      <div class="info-field"><label>Magic Level:</label><span class="info-val" id="i-ml"></span></div>
+      <div class="info-field"><label>Vida:</label><span class="info-val" id="i-hp"></span></div>
+      <div class="info-field"><label>Vida máx.:</label><span class="info-val" id="i-maxhp"></span></div>
+      <div class="info-field"><label>Mana:</label><span class="info-val" id="i-mana"></span></div>
+      <div class="info-field"><label>Mana máx.:</label><span class="info-val" id="i-maxmana"></span></div>
+      <div class="info-field"><label>Velocidade:</label><span class="info-val" id="i-speed"></span></div>
+      <div class="info-field"><label>Posição:</label><span class="info-val" id="i-pos"></span></div>
+      <div class="info-field"><label>Capacidade:</label><span class="info-val" id="i-cap"></span></div>
+      <div class="info-field"><label>Soul:</label><span class="info-val" id="i-soul"></span></div>
+      <div class="info-field"><label>Experiência:</label><span class="info-val" id="i-exp"></span></div>
+      <div class="info-field"><label>Exp/h:</label><span class="info-val" id="i-exph"></span></div>
+      <button class="btn-sm btn-gray" style="margin-top:8px">Resetar contador exp</button>
+    </div>
+  </div>
+</div>
 
 </div>
+
 <div id="statusbar">
   <span id="status-msg">Pronto</span>
-  <span>&#9889; PokBot v1.0.0</span>
+  <span>⚡ PokBot v1.0.0</span>
 </div>
+
 <script>
-  let cur = null
-  async function loadScripts() {
-    const list = await api.listScripts()
-    const el = document.getElementById('script-list')
-    el.innerHTML = ''
-    list.forEach(name => {
-      const d = document.createElement('div')
-      d.className = 'script-item' + (name === cur ? ' active' : '')
-      d.innerHTML = '<span class="dot"></span><span>' + name + '</span>'
-      d.onclick = () => openScript(name)
-      el.appendChild(d)
-    })
-  }
-  async function openScript(name) {
-    cur = name
-    document.getElementById('editor').value = await api.readScript(name)
-    document.getElementById('current-file').textContent = name
-    loadScripts()
-  }
-  async function saveScript() {
-    if (!cur) return alert('Nenhum script aberto!')
-    await api.saveScript(cur, document.getElementById('editor').value)
-    setStatus('Salvo: ' + cur)
-  }
-  async function newScript() {
-    const name = prompt('Nome do script:')
-    if (!name) return
-    await api.newScript(name)
-    await loadScripts()
-    openScript(name.endsWith('.lua') ? name : name + '.lua')
-  }
-  async function deleteScript() {
-    if (!cur) return alert('Nenhum script selecionado!')
-    if (!confirm('Deletar ' + cur + '?')) return
-    await api.deleteScript(cur)
-    cur = null
-    document.getElementById('editor').value = ''
-    document.getElementById('current-file').textContent = 'nenhum arquivo aberto'
-    await loadScripts()
-  }
-  async function sendToPKM() {
-    if (!cur) return alert('Nenhum script selecionado!')
-    await saveScript()
-    await api.sendToPKM(cur)
-    setStatus('Enviado: ' + cur)
-  }
-  async function importScript() {
-    const files = await api.importScript()
-    if (files.length) { await loadScripts(); openScript(files[0]) }
-  }
-  function switchTab(tab) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'))
-    const tabs = ['scripts','cavebot','healer','targeting','alerts','info']
-    document.querySelectorAll('.tab')[tabs.indexOf(tab)].classList.add('active')
-    document.getElementById('tab-' + tab).classList.add('active')
-  }
-  function setStatus(msg) {
-    const el = document.getElementById('status-msg')
-    el.textContent = msg; el.style.color = '#27ae60'
-    setTimeout(() => { el.textContent = 'Pronto'; el.style.color = '#555' }, 3000)
-  }
-  loadScripts()
+const TABS = ['healer','alerts','targeting','cavebot','scripts','looting','info']
+const SUBS = {
+  healer:['spell','item','condition'],
+  targeting:['settings','creatures'],
+  cavebot:['settings','scripts','waypoints'],
+  scripts:['persistent','hotkeys'],
+  looting:['settings','lootlist']
+}
+
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'))
+  document.querySelectorAll('#main>.tab-content').forEach(el=>el.classList.remove('active'))
+  document.querySelectorAll('.tab')[TABS.indexOf(t)].classList.add('active')
+  document.getElementById('tab-'+t).classList.add('active')
+}
+
+function switchSub(parent,sub) {
+  const p = document.getElementById('tab-'+parent)
+  p.querySelectorAll('.stab').forEach(el=>el.classList.remove('active'))
+  p.querySelectorAll('.scontent').forEach(el=>el.classList.remove('active'))
+  const idx = SUBS[parent].indexOf(sub)
+  p.querySelectorAll('.stab')[idx].classList.add('active')
+  document.getElementById(parent+'-'+sub).classList.add('active')
+}
+
+function toggleMenu(id) {
+  document.querySelectorAll('.dropdown').forEach(d=>{if(d.id!=='m-'+id)d.classList.remove('show')})
+  document.getElementById('m-'+id).classList.toggle('show')
+}
+function toggleCheck(el){el.classList.toggle('checked')}
+document.addEventListener('click',e=>{if(!e.target.closest('.menu-item'))document.querySelectorAll('.dropdown').forEach(d=>d.classList.remove('show'))})
+
+function selRow(row){row.closest('tbody').querySelectorAll('tr').forEach(r=>r.classList.remove('sel'));row.classList.add('sel')}
+
+let spellRules=[]
+function addSpellRule(){
+  const name=document.getElementById('sh-name').value
+  const spell=document.getElementById('sh-spell').value
+  const cond=document.getElementById('sh-cond').value
+  if(!name||!spell)return alert('Preencha nome e feitiço!')
+  spellRules.push({name,spell,cond})
+  renderSpellRules()
+  document.getElementById('sh-name').value=''
+  document.getElementById('sh-spell').value=''
+}
+function delSpellRule(){
+  const sel=document.querySelector('#spell-tbody tr.sel')
+  if(!sel)return alert('Selecione uma regra!')
+  const idx=[...document.querySelectorAll('#spell-tbody tr')].indexOf(sel)
+  spellRules.splice(idx,1)
+  renderSpellRules()
+}
+function renderSpellRules(){
+  const tbody=document.getElementById('spell-tbody')
+  if(!spellRules.length){tbody.innerHTML='<tr><td colspan="4" style="color:#555;text-align:center;padding:16px">Nenhuma regra</td></tr>';return}
+  tbody.innerHTML=spellRules.map((r,i)=>`<tr onclick="selRow(this)"><td><input type="checkbox" checked></td><td>${r.name}</td><td>${r.spell}</td><td>${r.cond}</td></tr>`).join('')
+}
+
+let wpCount=1
+function addWP(type){
+  const tbody=document.getElementById('wp-tbody')
+  const row=document.createElement('tr')
+  row.innerHTML=`<td>${String(wpCount).padStart(3,'0')}</td><td><select><option>${type}</option><option>Node</option><option>Stand</option><option>Label</option></select></td><td></td><td>x:0 y:0 z:8</td><td>1x1</td><td></td>`
+  row.onclick=()=>selRow(row)
+  tbody.appendChild(row)
+  wpCount++
+}
+
+function newScript(){const name=prompt('Nome do script:');if(name)alert('Script "'+name+'" criado!')}
+function loadScript(){alert('Selecione um arquivo da lista à direita')}
+function openScript(row,name){selRow(row)}
+function loadScriptFile(name){alert('Script "'+name+'" carregado!')}
+
+document.querySelectorAll('.dir-btn').forEach(b=>{
+  b.addEventListener('click',function(){
+    this.closest('.dir-grid').querySelectorAll('.dir-btn').forEach(x=>x.classList.remove('active'))
+    this.classList.add('active')
+  })
+})
 </script>
 </body>
 </html>
