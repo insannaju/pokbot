@@ -3,7 +3,10 @@ const path = require('path')
 const fs = require('fs')
 const { exec } = require('child_process')
 
-const PKM_PATH = 'C:\\Users\\User\\Desktop\\PKM LAUNCHER'
+const SHIBA_PATH = 'C:\\Users\\User\\Desktop\\shibinha'
+const LUA_SCRIPTS = path.join(SHIBA_PATH, 'luascripts')
+const LUA_HOTKEYS = path.join(SHIBA_PATH, 'luahotkeys')
+const CAVEBOT_SETTINGS = path.join(SHIBA_PATH, 'cavebotsettings')
 const SCRIPTS_PATH = path.join(__dirname, 'scripts')
 
 if (!fs.existsSync(SCRIPTS_PATH)) fs.mkdirSync(SCRIPTS_PATH)
@@ -52,14 +55,14 @@ ipcMain.on('do-login', (e, { user, pass }) => {
   }
 })
 
-// Listar processos PKM
+// Listar processos do Shiba/OTC
 ipcMain.handle('list-processes', () => {
   return new Promise((resolve) => {
     exec('tasklist /FO CSV /NH', (err, stdout) => {
       if (err) { resolve([]); return }
       const procs = []
       stdout.split('\n').forEach(line => {
-        const parts = line.replace(/"/g,'').split(',')
+        const parts = line.replace(/"/g, '').split(',')
         if (parts.length >= 2) {
           const name = parts[0].trim()
           const pid = parts[1].trim()
@@ -67,7 +70,9 @@ ipcMain.handle('list-processes', () => {
             name.toLowerCase().includes('pkm') ||
             name.toLowerCase().includes('poke') ||
             name.toLowerCase().includes('tibia') ||
-            name.toLowerCase().includes('otclient')
+            name.toLowerCase().includes('otclient') ||
+            name.toLowerCase().includes('amdsoftware') ||
+            name.toLowerCase().includes('otc')
           )) {
             procs.push({ name, pid })
           }
@@ -88,40 +93,81 @@ ipcMain.on('select-client', (e, { pid, name }) => {
 ipcMain.on('close-app', () => { app.quit() })
 ipcMain.on('minimize-app', () => { BrowserWindow.getFocusedWindow()?.minimize() })
 
-// Scripts
+// Listar scripts Lua (luascripts do Shiba)
 ipcMain.handle('list-scripts', () => {
-  return fs.readdirSync(SCRIPTS_PATH).filter(f => f.endsWith('.lua'))
+  try { return fs.readdirSync(LUA_SCRIPTS).filter(f => f.endsWith('.lua')) }
+  catch { return fs.readdirSync(SCRIPTS_PATH).filter(f => f.endsWith('.lua')) }
 })
-ipcMain.handle('read-script', (e, name) => {
-  return fs.readFileSync(path.join(SCRIPTS_PATH, name), 'utf8')
+
+// Listar hotkeys Lua
+ipcMain.handle('list-hotkeys', () => {
+  try { return fs.readdirSync(LUA_HOTKEYS).filter(f => f.endsWith('.lua')) }
+  catch { return [] }
 })
-ipcMain.handle('save-script', (e, name, content) => {
-  fs.writeFileSync(path.join(SCRIPTS_PATH, name), content, 'utf8')
+
+// Listar configs de cavebot salvas
+ipcMain.handle('list-configs', () => {
+  try { return fs.readdirSync(CAVEBOT_SETTINGS).filter(f => f.endsWith('.xml')) }
+  catch { return [] }
+})
+
+// Ler script
+ipcMain.handle('read-script', (e, name, type) => {
+  const folder = type === 'hotkey' ? LUA_HOTKEYS : LUA_SCRIPTS
+  try { return fs.readFileSync(path.join(folder, name), 'utf8') }
+  catch { return fs.readFileSync(path.join(SCRIPTS_PATH, name), 'utf8') }
+})
+
+// Salvar script
+ipcMain.handle('save-script', (e, name, content, type) => {
+  const folder = type === 'hotkey' ? LUA_HOTKEYS : LUA_SCRIPTS
+  fs.writeFileSync(path.join(folder, name), content, 'utf8')
   return true
 })
-ipcMain.handle('new-script', (e, name) => {
-  const file = path.join(SCRIPTS_PATH, name.endsWith('.lua') ? name : name + '.lua')
-  fs.writeFileSync(file, '-- ' + name + '\n', 'utf8')
+
+// Novo script
+ipcMain.handle('new-script', (e, name, type) => {
+  const folder = type === 'hotkey' ? LUA_HOTKEYS : LUA_SCRIPTS
+  const file = path.join(folder, name.endsWith('.lua') ? name : name + '.lua')
+  fs.writeFileSync(file, '-- ' + name + '\nauto(200)\n', 'utf8')
   return true
 })
-ipcMain.handle('delete-script', (e, name) => {
-  fs.unlinkSync(path.join(SCRIPTS_PATH, name))
+
+// Deletar script
+ipcMain.handle('delete-script', (e, name, type) => {
+  const folder = type === 'hotkey' ? LUA_HOTKEYS : LUA_SCRIPTS
+  fs.unlinkSync(path.join(folder, name))
   return true
 })
-ipcMain.handle('send-to-pkm', (e, name) => {
-  const src = path.join(SCRIPTS_PATH, name)
-  const dst = path.join(PKM_PATH, name)
-  fs.copyFileSync(src, dst)
-  return true
-})
-ipcMain.handle('import-script', async () => {
+
+// Importar script externo para luascripts
+ipcMain.handle('import-script', async (e, type) => {
+  const folder = type === 'hotkey' ? LUA_HOTKEYS : LUA_SCRIPTS
   const { canceled, filePaths } = await dialog.showOpenDialog({
     filters: [{ name: 'Lua Scripts', extensions: ['lua'] }],
     properties: ['openFile', 'multiSelections']
   })
   if (canceled) return []
   filePaths.forEach(fp => {
-    fs.copyFileSync(fp, path.join(SCRIPTS_PATH, path.basename(fp)))
+    fs.copyFileSync(fp, path.join(folder, path.basename(fp)))
   })
   return filePaths.map(fp => path.basename(fp))
+})
+
+// Salvar config XML (cavebot)
+ipcMain.handle('save-config', (e, name, content) => {
+  const file = path.join(CAVEBOT_SETTINGS, name.endsWith('.xml') ? name : name + '.xml')
+  fs.writeFileSync(file, content, 'utf8')
+  return true
+})
+
+// Ler config XML
+ipcMain.handle('read-config', (e, name) => {
+  return fs.readFileSync(path.join(CAVEBOT_SETTINGS, name), 'utf8')
+})
+
+// Abrir pasta do Shiba
+ipcMain.handle('open-shiba-folder', () => {
+  exec(`explorer "${SHIBA_PATH}"`)
+  return true
 })
